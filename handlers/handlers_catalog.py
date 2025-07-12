@@ -49,7 +49,7 @@ def gifts_catalog_keyboard(gifts):
     # Кнопка для возврата в главное меню
     keyboard.append([
         InlineKeyboardButton(
-            text="☰ Вернуться в меню", 
+            text="☰ Return to menu", 
             callback_data="catalog_main_menu"
         )
     ])
@@ -78,8 +78,8 @@ async def catalog(call: CallbackQuery, state: FSMContext):
     gifts_unlimited = [g for g in gifts if g['supply'] == None]
 
     await call.message.answer(
-        f"🧸 Обычных подарков: <b>{len(gifts_unlimited)}</b>\n"
-        f"👜 Уникальных подарков: <b>{len(gifts_limited)}</b>\n",
+        f"🧸 Regular gifts: <b>{len(gifts_unlimited)}</b>\n"
+        f"👜 Unique gifts: <b>{len(gifts_limited)}</b>\n",
         reply_markup=gifts_catalog_keyboard(gifts)
     )
 
@@ -94,7 +94,7 @@ async def start_callback(call: CallbackQuery, state: FSMContext):
     """
     await state.clear()
     await call.answer()
-    await safe_edit_text(call.message, "🚫 Каталог закрыт.", reply_markup=None)
+    await safe_edit_text(call.message, "🚫 The catalog is closed.", reply_markup=None)
     await refresh_balance(call.bot)
     await update_menu(
         bot=call.bot,
@@ -113,8 +113,8 @@ async def on_gift_selected(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     gifts = data.get("gifts_catalog", [])
     if not gifts:
-        await call.answer("🚫 Каталог устарел. Откройте заново.", show_alert=True)
-        await safe_edit_text(call.message, "🚫 Каталог устарел. Откройте заново.", reply_markup=None)
+        await call.answer("🚫 The catalog is out of date. Please reopen it.", show_alert=True)
+        await safe_edit_text(call.message, "🚫 The catalog is out of date. Please reopen it.", reply_markup=None)
         return
     gift = next((g for g in gifts if str(g['id']) == gift_id), None)
 
@@ -122,9 +122,9 @@ async def on_gift_selected(call: CallbackQuery, state: FSMContext):
 
     await state.update_data(selected_gift=gift)
     await call.message.edit_text(
-        f"🎯 Вы выбрали: <b>{gift_display}</b> за ★{gift['price']}\n"
-        f"🎁 Введите <b>количество</b> для покупки:\n\n"
-        f"/cancel - для отмены",
+        f"🎯 You have chosen: <b>{gift_display}</b> за ★{gift['price']}\n"
+        f"🎁 Enter <b>quantity</b> to purchase:\n\n"
+        f"/cancel - to cancel",
         reply_markup=None
     )
     await state.set_state(CatalogFSM.waiting_quantity)
@@ -145,17 +145,17 @@ async def on_quantity_entered(message: Message, state: FSMContext):
         if qty <= 0:
             raise ValueError
     except Exception:
-        await message.answer("🚫 Введите целое положительное число!")
+        await message.answer("🚫 Please enter a positive integer!")
         return
     
     await state.update_data(selected_qty=qty)
 
     await message.answer(
-        "👤 Введите получателя подарка:\n\n"
-        f"• <b>ID пользователя</b> (например ваш: <code>{message.from_user.id}</code>)\n"
-        "• Или <b>username канала</b> (например: <code>@channel</code>)\n\n"
-        "❗️ Узнать ID пользователя тут @userinfobot\n\n"
-        "/cancel — отменить"
+        "👤 Enter the gift recipient:\n\n"
+        f"• <b>User ID</b> (for example yours: <code>{message.from_user.id}</code>)\n"
+        "• Or <b>channel username</b> (for example: <code>@channel</code>)\n\n"
+        "❗️ Find out user ID here @userinfobot\n\n"
+        "/cancel — to cancel"
     )
     await state.set_state(CatalogFSM.waiting_recipient)
 
@@ -177,7 +177,7 @@ async def on_recipient_entered(message: Message, state: FSMContext):
         target_user_id = int(user_input)
     else:
         await message.answer(
-            "🚫 Если получатель аккаунт — введите ID, если канал — username с @. Попробуйте ещё раз."
+            "🚫 If the recipient is an account, enter the ID, if a channel, enter the username with @. Try again."
         )
         return
 
@@ -197,18 +197,18 @@ async def on_recipient_entered(message: Message, state: FSMContext):
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_purchase"),
-                InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_purchase"),
+                InlineKeyboardButton(text="✅ Confirm", callback_data="confirm_purchase"),
+                InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_purchase"),
             ]
         ]
     )
     recipient_display = get_target_display_local(target_user_id, target_chat_id, message.from_user.id)
     await message.answer(
-        f"📦 Подарок: <b>{gift_display}</b>\n"
-        f"🎁 Количество: <b>{qty}</b>\n"
-        f"💵 Цена подарка: <b>★{price:,}</b>\n"
-        f"💰 Общая сумма: <b>★{total:,}</b>\n"
-        f"👤 Получатель: {recipient_display}",
+        f"📦 A gift: <b>{gift_display}</b>\n"
+        f"🎁 Quantity: <b>{qty}</b>\n"
+        f"💵 Gift price: <b>★{price:,}</b>\n"
+        f"💰 Total amount: <b>★{total:,}</b>\n"
+        f"👤 Recipient: {recipient_display}",
         reply_markup=kb
     )
     await state.set_state(CatalogFSM.waiting_confirm)
@@ -222,10 +222,10 @@ async def confirm_purchase(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     gift = data["selected_gift"]
     if not gift:
-        await call.answer("🚫 Запрос на покупку не актуален. Пожалуйста, попробуйте снова.", show_alert=True)
-        await safe_edit_text(call.message, "🚫 Запрос на покупку не актуален. Пожалуйста, попробуйте снова.", reply_markup=None)
+        await call.answer("🚫 The purchase request is not valid. Please try again.", show_alert=True)
+        await safe_edit_text(call.message, "🚫 The purchase request is not valid. Please try again.", reply_markup=None)
         return
-    await call.message.edit_text(text="⏳ Выполняется покупка подарков...", reply_markup=None)
+    await call.message.edit_text(text="⏳ Gift shopping in progress...", reply_markup=None)
     gift_id = gift.get("id")
     gift_price = gift.get("price")
     qty = data["selected_qty"]
@@ -252,16 +252,16 @@ async def confirm_purchase(call: CallbackQuery, state: FSMContext):
         await asyncio.sleep(0.3)
 
     if bought == qty:
-        await call.message.answer(f"✅ Покупка <b>{gift_display}</b> успешно завершена!\n"
-                                  f"🎁 Куплено подарков: <b>{bought}</b> из <b>{qty}</b>\n"
-                                  f"👤 Получатель: {get_target_display_local(target_user_id, target_chat_id, call.from_user.id)}")
+        await call.message.answer(f"✅ Purchase <b>{gift_display}</b> completed successfully!\n"
+                                  f"🎁 Gifts purchased: <b>{bought}</b> of <b>{qty}</b>\n"
+                                  f"👤 Recipient: {get_target_display_local(target_user_id, target_chat_id, call.from_user.id)}")
     else:
-        await call.message.answer(f"⚠️ Покупка <b>{gift_display}</b> остановлена.\n"
-                                  f"🎁 Куплено подарков: <b>{bought}</b> из <b>{qty}</b>\n"
-                                  f"👤 Получатель: {get_target_display_local(target_user_id, target_chat_id, call.from_user.id)}\n"
-                                  f"💰 Пополните баланс!\n"
-                                  f"📦 Проверьте доступность подарка!\n"
-                                  f"🚦 Статус изменён на 🔴 (неактивен).")
+        await call.message.answer(f"⚠️ Purchase of <b>{gift_display}</b> has been stopped.\n"
+                                  f"🎁 Gifts purchased: <b>{bought}</b> of <b>{qty}</b>\n"
+                                  f"👤 Recipient: {get_target_display_local(target_user_id, target_chat_id, call.from_user.id)}\n"
+                                  f"💰 Top up your balance!\n"
+                                  f"📦 Check gift availability!\n"
+                                  f"🚦 Status changed to 🔴 (inactive).")
     
     await state.clear()
     await call.answer()
@@ -275,7 +275,7 @@ async def cancel_callback(call: CallbackQuery, state: FSMContext):
     """
     await state.clear()
     await call.answer()
-    await safe_edit_text(call.message, "🚫 Действие отменено.", reply_markup=None)
+    await safe_edit_text(call.message, "🚫 Action canceled.", reply_markup=None)
     await update_menu(bot=call.bot, chat_id=call.message.chat.id, user_id=call.from_user.id, message_id=call.message.message_id)
 
 
@@ -286,7 +286,7 @@ async def try_cancel(message: Message, state: FSMContext) -> bool:
     """
     if message.text and message.text.strip().lower() == "/cancel":
         await state.clear()
-        await message.answer("🚫 Действие отменено.")
+        await message.answer("🚫 Action canceled.")
         await update_menu(bot=message.bot, chat_id=message.chat.id, user_id=message.from_user.id, message_id=message.message_id)
         return True
     return False
